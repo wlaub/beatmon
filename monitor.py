@@ -4,7 +4,7 @@ import os
 import time
 import math
 
-class MessageHandler():
+class BeatSaberMonitor():
     note_channel_map = {
             'NoteA': 0,
             'NoteB': 1,
@@ -102,7 +102,8 @@ class MessageHandler():
 
             #print(message, flush=True)
             if event == "noteCut":
-                pass"""
+                pass
+                """
                 print('note cut event')
                 cut_data = message['noteCut']
                 
@@ -116,7 +117,8 @@ class MessageHandler():
                 self.pending_notes.append(mnote)
                 print('note cut event over')"""
             elif event == "noteFullyCut":
-                pass"""
+                pass
+                """
                 cut_data = message['noteCut']
                 note_id = cut_data['noteID']
                 self.stop_midi_note(note_id)"""

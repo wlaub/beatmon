@@ -91,10 +91,10 @@ class BlockCutNoteGenerator(MidiNoteGenerator):
     This is a class for generating midi notes associated with beat saber note/block
     cuts.
     """
-    def __init__(self, blue_channel=0, red_channel=1):
+    def __init__(self, left_channel=0, right_channel=1):
         self.note_channel_map = {
-            'NoteA': red_channel,
-            'NoteB': blue_channel,
+            'NoteA': left_channel,
+            'NoteB': right_channel,
         }
 
     def process(self, monitor, message):
@@ -125,6 +125,40 @@ class BlockCutNoteGenerator(MidiNoteGenerator):
 
     def __str__(self):
         return f'Block -> Note generator with Left on {self.note_channel_map["NoteA"]} and Right on {self.note_channel_map["NoteB"]}'
+
+class EventNoteTrigger(MidiNoteGenerator):
+    """
+    Generates a short note on a given channel every time a given event happens
+    """
+
+    def __init__(self, event_name, channel, note_kwargs = None):
+        self.event_name = event_name
+
+        self.note_kwargs = {'note': 74, 'velocity': 127}
+        if note_kwargs != None:
+            self.note_kwargs.update(note_kwargs)
+        self.note_kwargs['channel'] = channel
+
+        self.channel = channel
+
+    def process(self, monitor, message):
+        event = message['event']
+        if event == self.event_name:
+            mnote = MidiNote(None, **self.note_kwargs)
+            mnote.start(MidiNoteGenerator.midi_out)
+            time.sleep(0.01)
+            mnote.stop(MidiNoteGenerator.midi_out)
+
+            return False
+        elif event == 'hello':
+            print(f'{self} says Hello!')           
+            return False
+        return None
+
+    def __str__(self):
+        return f'Event -> Trigger generator mapping \'{self.event_name}\' to {self.channel}'
+
+
 
 #Initialization of midi port
 

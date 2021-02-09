@@ -47,14 +47,16 @@ if __name__ == "__main__":
 
     midi_out = midi.init_midi(config['midi_port'])
 
-    handler = monitor.MessageHandler(midi_out)
+    bsmon = monitor.BeatSaberMonitor(midi_out)
 
-    handler.message_processors.extend([
-        midi.BlockCutNoteGenerator(),
+    bsmon.message_processors.extend([
+        midi.BlockCutNoteGenerator(0,1),
+        midi.EventNoteTrigger('noteMissed', channel=2),
+        midi.EventNoteTrigger('bombCut', channel=3),       
         ])
 
 
-    ws = handler.get_ws_app()
+    ws = bsmon.get_ws_app()
 
     print("Started, Connecting to Beat Saber...", flush=True)
     ws.run_forever()
