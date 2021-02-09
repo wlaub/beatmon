@@ -28,7 +28,6 @@ class BeatSaberMonitor():
     }
 
     def __init__(self, midi_port):
-        self.pending_notes = []
         self.midi_out = midi_port
         self.current_map = None
         
@@ -44,19 +43,8 @@ class BeatSaberMonitor():
 
          
     def clear_midi(self):
-        for entry in self.pending_notes:
-            entry.stop(self.midi_out)
-        self.pending_notes = []
         self.send_ccs(self.resting_ccs)
          
-    def stop_midi_note(self, note_id):
-        for entry in self.pending_notes:
-            if entry.note_id == note_id:
-                print(f'stoping note: {entry}')
-                entry.stop(self.midi_out)
-                self.pending_notes.remove(entry)
-                break
-
     def send_ccs(self, cc_dict):
         print(cc_dict)
         for key, val in cc_dict.items():
@@ -101,12 +89,7 @@ class BeatSaberMonitor():
                 if result == True: break
 
             #print(message, flush=True)
-            if event == 'obstacleEnter':
-                mnote = MidiNote('obstacle', channel=self.channel_map['Obstacle'])
-                mnote.start(self.midi_out)
-            elif event == 'obstacleExit':
-                self.stop_midi_note('obstacle')
-            elif event in ['finished', 'failed', 'menu']:
+            if event in ['finished', 'failed', 'menu']:
                 self.clear_midi()
                 self.current_map = None
             elif event == 'songStart':
