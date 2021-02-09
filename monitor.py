@@ -25,7 +25,6 @@ class BeatSaberMonitor():
 
     def __init__(self, midi_port):
         self.midi_out = midi_port
-        self.current_map = None
         
         self.wscallbacks = {
             'on_message': lambda x,y: self.on_message(x,y),
@@ -37,7 +36,24 @@ class BeatSaberMonitor():
         #list of class instances that are passed messages to do stuff with via process()
         self.message_processors = [] 
 
-         
+        self.current_map = {}
+        self.current_performance = {}
+        self.current_modifiers = {}
+        self.current_playersettings = {}
+        self.current_gameinfo = {}
+
+        self.in_map = False
+        self.paused = False
+        self.softfailed = False
+
+    def update_state(self, message):
+        status = message['status']
+        self.current_map = status.get('beatmap', self.current_map)
+        self.current_performance = status.get('performance', self.current_performance)
+        self.current_modifiers = status.get('mod', self.current_modifiers)
+        self.current_playersettings = status.get('playerSettings', self.current_playersettings)
+        self.current_gameinfo = status.get('game', self.current_gameinfo)
+
     def clear_midi(self):
         self.send_ccs(self.resting_ccs)
          
@@ -74,12 +90,8 @@ class BeatSaberMonitor():
             start_time = message['time']/1000
             event = message['event']
             #print(f'Message received: {event}', flush=True)
-            
-            beatmap = message['status'].get('beatmap', None)
-            if beatmap != None: self.current_map = beatmap
-            
-            performance = message['status'].get('performance', None)
-            #self.performance_ccs(performance)
+
+            self.update_state(message)
 
             hit = False
             lines = []
@@ -97,13 +109,21 @@ class BeatSaberMonitor():
             elif not hit and False:
                 print(f'Did not process event {event}')
 
-            #print(message, flush=True)
+            #Game state transitions
             if event in ['finished', 'failed', 'menu']:
-                self.clear_midi()
-                self.current_map = None
+                self.in_map = False
+                self.paused = False
             elif event == 'songStart':
-                self.current_map = message['status']['beatmap']
-                
+                self.in_map = True
+                self.softfailed = False
+            elif event =='pause':
+                self.paused = True
+            elif event == 'resume':
+                self.paused = False
+            elif event == 'softFailed':
+                self.softfailed = True
+
+
         except Exception as e:
             print(str(e))
             raise e
