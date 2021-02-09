@@ -5,12 +5,6 @@ import time
 import math
 
 class BeatSaberMonitor():
-    note_channel_map = {
-            'NoteA': 0,
-            'NoteB': 1,
-            'Bomb': 2, 
-            'Obstacle': 3,
-        }
 
     midi_cc_map = {
         'score': 0,
