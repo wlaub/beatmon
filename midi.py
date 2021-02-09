@@ -29,9 +29,11 @@ class MidiNote():
         self.stop_msg = mido.Message('note_off', **kwargs)
 
     def start(self, port):
+        print(f'Note on - {self.note_id}')
         port.send(self.start_msg)
         
     def stop(self, port):
+        print(f'Note off - {self.note_id}')
         port.send(self.stop_msg)
 
 class MessageProcessor():
@@ -63,11 +65,10 @@ class MidiNoteGenerator(MessageProcessor):
 
     def all_notes_off(self):
         cls = MidiNoteGenerator
+        print(f'Switching off {len(cls.note_list)} notes')
         for note in cls.note_list:
             note.stop(cls.midi_out)
         cls.note_list = []
-        
-        pass
 
     def single_note_off(self, note_id):
         cls = MidiNoteGenerator   
@@ -76,7 +77,7 @@ class MidiNoteGenerator(MessageProcessor):
             if note.note_id == note_id:
                 delete_list.append(note)
         for note in delete_list:
-            entry.stop(cls.midi_out)
+            note.stop(cls.midi_out)
             cls.note_list.remove(note)
 
     def add_note(self, note, play=False):
@@ -85,6 +86,17 @@ class MidiNoteGenerator(MessageProcessor):
             note.start(cls.midi_out)
         cls.note_list.append(note)
     
+
+class MidiNoteCleanup(MidiNoteGenerator):
+    """
+    This just cleans up notes when the song ends
+    """
+    def process(self, monitor, message):
+        if message['event'] == 'hello': return False
+        return self.process_aborts(message)
+
+    def __str__(self):
+        return 'Midi Note Cleanup Processor'
 
 class BlockCutNoteGenerator(MidiNoteGenerator):
     """
@@ -99,7 +111,6 @@ class BlockCutNoteGenerator(MidiNoteGenerator):
 
     def process(self, monitor, message):
         event = message['event']
-        self.process_aborts(message)
         if event == 'noteCut':
             cut_data = message['noteCut']
             
@@ -107,19 +118,18 @@ class BlockCutNoteGenerator(MidiNoteGenerator):
             velocity = int(cut_data['cutDistanceScore']*127/15)
             channel = self.note_channel_map.get(cut_data['noteType'], 15)
 
-            print(f'sending note')
             mnote = MidiNote(cut_data['noteID'], note=pitch, velocity = velocity, channel=channel)
             self.add_note(mnote, play=True)
 
             return False
         elif event == 'noteFullyCut':
+
             cut_data = message['noteCut']
             note_id = cut_data['noteID']
             self.single_note_off(note_id)
 
             return False
         elif event == 'hello':
-            print(f'{self} says Hello!')
             return False
         return None    
 
@@ -152,7 +162,6 @@ class EventNoteTrigger(MidiNoteGenerator):
 
             return False
         elif event == 'hello':
-            print(f'{self} says Hello!')           
             return False
         return None
 
@@ -185,7 +194,6 @@ class EventNoteGate(MidiNoteGenerator):
             self.single_note_off(self.note_id)
             return False
         elif event == 'hello':
-            print(f'{self} says Hello!')           
             return False
         return None
 

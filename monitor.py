@@ -4,6 +4,8 @@ import os
 import time
 import math
 
+import mido
+
 class BeatSaberMonitor():
 
     midi_cc_map = {
@@ -69,18 +71,31 @@ class BeatSaberMonitor():
     def on_message(self, ws, message):
         try:
             message=json.loads(message)
+            start_time = message['time']/1000
             event = message['event']
-            print(f'Message received: {event}', flush=True)
+            #print(f'Message received: {event}', flush=True)
             
             beatmap = message['status'].get('beatmap', None)
             if beatmap != None: self.current_map = beatmap
             
             performance = message['status'].get('performance', None)
-            self.performance_ccs(performance)
+            #self.performance_ccs(performance)
 
+            hit = False
+            lines = []
             for processor in self.message_processors:
                 result = processor.process(self, message)
-                if result == True: break
+                if result == False:
+                    hit = True
+                    lines.append(f'* {(time.time()-start_time)*1000:.2f}ms - {processor}')
+                elif result == True: 
+                    lines.append(f'# {processor}')
+                    break
+            if hit:
+                print(f'Processed event {event}')
+                print('\n'.join(lines), flush=True)
+            elif not hit and False:
+                print(f'Did not process event {event}')
 
             #print(message, flush=True)
             if event in ['finished', 'failed', 'menu']:
@@ -92,7 +107,8 @@ class BeatSaberMonitor():
         except Exception as e:
             print(str(e))
             raise e
-        print('Done', flush=True)
+        if hit:
+            print('Done', flush=True)
 
     def on_open(self, ws):
         print('Socket opened', flush=True)
