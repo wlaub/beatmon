@@ -59,11 +59,14 @@ class MidiNoteGenerator(MessageProcessor):
     note_list = []
     midi_out = None #Make sure to set this at some point?
 
+    def is_abort(self, message):
+        return message['event'] in ['finished', 'failed', 'menu']
+
     def process_aborts(self, message):
         """
         Certain events, e.g. menu, fail, finish should stop all notes
         """
-        if message['event'] in ['finished', 'failed', 'menu']:
+        if self.is_abort(message):
             self.all_notes_off()
             return False
         return None
@@ -292,11 +295,16 @@ class PerformanceCCGenerator(MidiNoteGenerator):
         self.update_ccs(self.cc_rest_values)
 
     def process(self, monitor, message):
-        data = {}
+        if self.is_abort(message):
+            self.clear_ccs()
+            return False
+
         perf = message['status'].get('performance', None)
         if perf == None: 
             if message['event'] == 'hello': return False
             return None
+
+        data = {}
 
         try:
             data['score'] = perf['score']/perf['currentMaxScore']
