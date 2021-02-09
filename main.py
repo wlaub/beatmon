@@ -34,7 +34,9 @@ if __name__ == "__main__":
         midi.EventNoteGate('obstacleEnter', 'obstacleExit', channel=4), #in a wall
         midi.SongBPMNote(channel = 5), #in a song w/ bpm info
         midi.EventNoteGate('pause', ['resume','menu'], channel=6), #song paused
-        midi.MidiNoteCleanup() #Stops notes at the end of the song
+        midi.PerformanceCCGenerator(),
+        midi.MidiNoteCleanup(), #Stops notes at the end of the song
+
         ])
 
 
