@@ -29,11 +29,11 @@ class MidiNote():
         self.stop_msg = mido.Message('note_off', **kwargs)
 
     def start(self, port):
-        print(f'Note on - {self.note_id}')
+        print(f'Note on - {self.note_id} - {self.start_msg}')
         port.send(self.start_msg)
         
     def stop(self, port):
-        print(f'Note off - {self.note_id}')
+        print(f'Note off - {self.note_id} - {self.stop_msg}')
         port.send(self.stop_msg)
 
 class MessageProcessor():
@@ -157,7 +157,7 @@ class EventNoteTrigger(MidiNoteGenerator):
         if event in self.event_name:
             mnote = MidiNote(None, **self.note_kwargs)
             mnote.start(MidiNoteGenerator.midi_out)
-            time.sleep(0.01)
+            time.sleep(0.001)
             mnote.stop(MidiNoteGenerator.midi_out)
 
             return False
