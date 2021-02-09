@@ -1,6 +1,7 @@
 import time
 import os
 import json
+import math
 
 import mido
 
@@ -45,7 +46,11 @@ class MessageProcessor():
         Return True if the message should not propagate
         Return False if the message should propagate
         return None if the nothing happened
+
+        protip: return False on hello in order to print the __str__ of the
+        processor on startup
         """
+        return None
 
 class MidiNoteGenerator(MessageProcessor):
     """
@@ -200,6 +205,33 @@ class EventNoteGate(MidiNoteGenerator):
     def __str__(self):
         return f'Event -> Gate generator mapping \'{self.start_event}\' through \'{self.stop_event}\' to {self.channel}'
 
+class SongBPMNote(MidiNoteGenerator):
+    """
+    Generates a note when the song is playing with pitch information giving the
+    bpm relative to 120 BPM at 74 / C4
+    """
+    def __init__(self, channel):
+        self.channel = channel
+        self.note_id = 'in-map-note'
+
+    def process(self, monitor, message):
+        event = message['event']
+        if event == 'songStart':
+            bpm = monitor.current_map.get('songBPM', 120)
+            bpm = math.log(bpm/120)/math.log(2)
+            bmp_note = int(74+bpm*12)
+            mnote = MidiNote(self.note_id, note=bpm_note, velocity = 127, channel=self.channel)
+            self.add_note(mnote, play=True)
+            return False
+        elif event in ['finished, failed, menu']:
+            self.single_note_off(self.note_id)
+            return False
+        elif event == 'hello':
+            return False
+        return None
+
+    def __str__(self):
+        return f'Song BPM Note on {self.channel}'
 
 #Initialization of midi port
 
