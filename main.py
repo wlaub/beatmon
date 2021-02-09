@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     midi_out = midi.init_midi(config['midi_port'])
 
-    bsmon = monitor.BeatSaberMonitor(midi_out)
+    bsmon = monitor.BeatSaberMonitor()
 
     bsmon.message_processors.extend([
         midi.BlockCutNoteGenerator(0,1),
