@@ -109,7 +109,7 @@ class BlockCutNoteGenerator(MidiNoteGenerator):
 
             print(f'sending note')
             mnote = MidiNote(cut_data['noteID'], note=pitch, velocity = velocity, channel=channel)
-            self.add_note(mnote)
+            self.add_note(mnote, play=True)
 
             return False
         elif event == 'noteFullyCut':
@@ -128,7 +128,8 @@ class BlockCutNoteGenerator(MidiNoteGenerator):
 
 class EventNoteTrigger(MidiNoteGenerator):
     """
-    Generates a short note on a given channel every time a given event happens
+    Generates a short note on a given channel every time a given event happens.
+    Event name may be a list or string.
     """
 
     def __init__(self, event_name, channel, note_kwargs = None):
@@ -143,7 +144,7 @@ class EventNoteTrigger(MidiNoteGenerator):
 
     def process(self, monitor, message):
         event = message['event']
-        if event == self.event_name:
+        if event in self.event_name:
             mnote = MidiNote(None, **self.note_kwargs)
             mnote.start(MidiNoteGenerator.midi_out)
             time.sleep(0.01)
@@ -158,6 +159,38 @@ class EventNoteTrigger(MidiNoteGenerator):
     def __str__(self):
         return f'Event -> Trigger generator mapping \'{self.event_name}\' to {self.channel}'
 
+class EventNoteGate(MidiNoteGenerator):
+    """
+    Like EventNoteTrigger, but with start and stop conditions
+    """
+    def __init__(self, start_event, stop_event, channel, note_kwargs = None):
+        self.start_event = start_event
+        self.stop_event = stop_event
+        self.note_kwargs = {'note': 74, 'velocity': 127}
+        if note_kwargs != None:
+            self.note_kwargs.update(note_kwargs)
+        self.note_kwargs['channel'] = channel
+
+        self.channel = channel
+
+        self.note_id = f'gate_{self.start_event}_{self.stop_event}'
+
+    def process(self, monitor, message):
+        event = message['event']
+        if event in self.start_event:
+            mnote = MidiNote(self.note_id, **self.note_kwargs)
+            self.add_note(mnote, play=True)
+            return False
+        elif event in self.stop_event:
+            self.single_note_off(self.note_id)
+            return False
+        elif event == 'hello':
+            print(f'{self} says Hello!')           
+            return False
+        return None
+
+    def __str__(self):
+        return f'Event -> Gate generator mapping \'{self.start_event}\' through \'{self.stop_event}\' to {self.channel}'
 
 
 #Initialization of midi port

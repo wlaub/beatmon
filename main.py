@@ -53,6 +53,9 @@ if __name__ == "__main__":
         midi.BlockCutNoteGenerator(0,1),
         midi.EventNoteTrigger('noteMissed', channel=2),
         midi.EventNoteTrigger('bombCut', channel=3),       
+        midi.EventNoteGate('obstacleEnter', 'obstacleExit', channel=4), #in a wall
+        midi.EventNoteGate('songStart', ['finished', 'failed', 'menu'], channel=5), #in a song
+        midi.EventNoteGate('pause', 'resume', channel=6), #song paused
         ])
 
 

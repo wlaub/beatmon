@@ -101,28 +101,7 @@ class BeatSaberMonitor():
                 if result == True: break
 
             #print(message, flush=True)
-            if event == "noteCut":
-                pass
-                """
-                print('note cut event')
-                cut_data = message['noteCut']
-                
-                pitch = 74+int(cut_data['initialScore']*24/85)-12
-                velocity = int(cut_data['cutDistanceScore']*127/15)
-                channel = self.note_channel_map.get(cut_data['noteType'], 15)
-                print(f'sending note')
-                mnote = MidiNote(cut_data['noteID'], note=pitch, velocity = velocity, channel=channel)
-                mnote.start(self.midi_out)
-                
-                self.pending_notes.append(mnote)
-                print('note cut event over')"""
-            elif event == "noteFullyCut":
-                pass
-                """
-                cut_data = message['noteCut']
-                note_id = cut_data['noteID']
-                self.stop_midi_note(note_id)"""
-            elif event == 'obstacleEnter':
+            if event == 'obstacleEnter':
                 mnote = MidiNote('obstacle', channel=self.channel_map['Obstacle'])
                 mnote.start(self.midi_out)
             elif event == 'obstacleExit':
