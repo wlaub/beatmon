@@ -39,6 +39,7 @@ class SessionArchive():
             }
 
     def save(self):
+        #TODO thread this so it can't block the monitor and break the connection
         with open(self.song_filename, 'w') as fp:
             json.dump(self.song_map, fp)
         print(f'Saved song index {self.song_filename}')
@@ -48,6 +49,7 @@ class SessionArchive():
         print(f'Saved archive {self.session_filename}')
 
     def get_map_hash(self, map_info):
+        if map_info == None: return None
         result = map_info['levelId']
         return result
 
@@ -63,25 +65,33 @@ class SessionArchive():
             self.current_data['events'].append(event_entry)
         
         if event in ['finished', 'failed', 'menu']:
-            print(f'Archiver noticed that song finished with {len(self.current_data)} events')
-            if len(self.current_data) > 0:
-                if self.current_data[-1] != event_entry:
+            print(f'Archiver noticed that song finished with {len(self.current_data["events"])} events')
+            if len(self.current_data['events']) > 0:
+                if self.current_data['events'][-1] != event_entry:
                     self.current_data['events'].append(event_entry)
-                    self.current_data['performance'] = monitor.current_performance
-                    self.current_data['modifiers'] = monitor.current_modifiers
-                    self.current_data['playersettings'] = monitor.current_playersettings
-                    self.current_data['gameinfo'] = monitor.current_gameinfo
 
-                    map_info = monitor.current_map
-                    map_hash = self.get_map_hash(map_info)
-                    
-                    if not map_hash in self.song_map:
-                        self.song_map[map_hash] = map_info
+                self.current_data['performance'] = monitor.current_performance
+                self.current_data['modifiers'] = monitor.current_modifiers
+                self.current_data['playersettings'] = monitor.current_playersettings
+                self.current_data['gameinfo'] = monitor.current_gameinfo
 
-                    self.current_data['map_hash'] = map_hash
-
-                self.data.append(self.current_data)
+                #make sure old stuff gets cleared
+                data_entry = self.current_data
                 self.clear()
+
+                #link up the map info and save
+                map_info = monitor.current_map
+                map_hash = self.get_map_hash(map_info)
+                
+                if not map_hash in self.song_map.keys():
+                    print(f'Added new map with hash {map_hash} to map index')
+                    self.song_map[map_hash] = map_info
+                else:
+                    print(f'Played existing map with hash {map_hash}')
+
+                data_entry['map_hash'] = map_hash
+
+                self.data.append(data_entry)
                 self.save()
             return False
 
