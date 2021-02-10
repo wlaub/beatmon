@@ -287,8 +287,9 @@ class PerformanceCCGenerator(MidiNoteGenerator):
         for key, cc_code in self.cc_map.items():
             val = data.get(key, None)
             if self.cc_memory[key] == val: continue
-            msg = mido.Message('control_change', control=cc_code, value=int(val*127), channel=self.channel)
-            self.send_midi_msg(msg)
+            if val != None:
+                msg = mido.Message('control_change', control=cc_code, value=int(val*127), channel=self.channel)
+                self.send_midi_msg(msg)
             self.cc_memory[key] = val
 
     def clear_ccs(self):

@@ -4,6 +4,8 @@ import os
 import time
 import math
 
+import traceback
+
 class BeatSaberMonitor():
 
     def __init__(self):
@@ -48,13 +50,18 @@ class BeatSaberMonitor():
             hit = False
             lines = []
             for processor in self.message_processors:
-                result = processor.process(self, message)
-                if result == False:
-                    hit = True
-                    lines.append(f'* {(time.time()-start_time)*1000:.2f}ms - {processor}')
-                elif result == True: 
-                    lines.append(f'# {processor}')
-                    break
+                try:
+                    result = processor.process(self, message)
+                    if result == False:
+                        hit = True
+                        lines.append(f'* {(time.time()-start_time)*1000:.2f}ms - {processor}')
+                    elif result == True: 
+                        lines.append(f'# {processor}')
+                        break
+                except Exception as exc:
+                    print(f'Exception while running {processor}')
+                    traceback.print_exc()
+                    
             if hit:
                 print(f'Event {event} received by the following processors:')
                 print('\n'.join(lines), flush=True)
@@ -65,7 +72,10 @@ class BeatSaberMonitor():
             if event in ['finished', 'failed', 'menu']:
                 self.in_map = False
                 self.paused = False
+                print(f'Exited map')
             elif event == 'songStart':
+                print('\n'*20)
+                print(f'Entered map')
                 self.in_map = True
                 self.softfailed = False
             elif event =='pause':
@@ -78,7 +88,8 @@ class BeatSaberMonitor():
 
         except Exception as e:
             print(f'Error processing message {message}:\n')
-            print(str(e), flush=True)
+            traceback.print_exc()
+            print('', flush=True)
             raise e
         if hit:
             print('Done', flush=True)

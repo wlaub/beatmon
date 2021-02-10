@@ -11,6 +11,7 @@ Loopmidi needs to be running with an appropriatedly named port
 """
 
 import midi
+import record
 
 if __name__ == "__main__":
 
@@ -36,7 +37,7 @@ if __name__ == "__main__":
         midi.EventNoteGate('pause', ['resume','menu'], channel=6), #song paused
         midi.PerformanceCCGenerator(),
         midi.MidiNoteCleanup(), #Stops notes at the end of the song
-
+        record.SongArchive('dump.json'),
         ])
 
 
