@@ -53,22 +53,27 @@ class SessionArchive():
         result = map_info['levelId']
         return result
 
+    def add_event(self, message):
+        event_entry = dict(message)
+        if message['event'] in ['beatmapEvent']: return
+        
+        event_entry.pop('status')
+        if len(self.current_data['events']) == 0 or self.current_data['events'][-1] != event_entry:
+            self.current_data['events'].append(event_entry)
+
+
     def process(self, monitor, message):
         event = message['event']
         if event == 'hello':
             return False
 
-        event_entry = dict(message)
-        event_entry.pop('status')
-
         if monitor.in_map:
-            self.current_data['events'].append(event_entry)
+            self.add_event(message)
         
         if event in ['finished', 'failed', 'menu']:
             print(f'Archiver noticed that song finished with {len(self.current_data["events"])} events')
             if len(self.current_data['events']) > 0:
-                if self.current_data['events'][-1] != event_entry:
-                    self.current_data['events'].append(event_entry)
+                self.add_event(message)
 
                 self.current_data['performance'] = monitor.current_performance
                 self.current_data['modifiers'] = monitor.current_modifiers
@@ -82,6 +87,8 @@ class SessionArchive():
                 #link up the map info and save
                 map_info = monitor.current_map
                 map_hash = self.get_map_hash(map_info)
+                
+                map_info['songCover'] = None
                 
                 if not map_hash in self.song_map.keys():
                     print(f'Added new map with hash {map_hash} to map index')
