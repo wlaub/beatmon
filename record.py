@@ -80,6 +80,11 @@ class SessionArchive():
                 self.current_data['playersettings'] = monitor.current_playersettings
                 self.current_data['gameinfo'] = monitor.current_gameinfo
 
+                instance_info = {}
+                self.current_data['instanceinfo'] = instance_info
+                instance_info['start_time'] = monitor.current_map['start']
+                instance_info['difficulty'] = monitor.current_map['difficulty']
+
                 #make sure old stuff gets cleared
                 data_entry = self.current_data
                 self.clear()
